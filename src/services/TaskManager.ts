@@ -119,33 +119,40 @@ export class TaskManager {
       }
 
       const detailUpdates: Partial<Pick<TaskInterface, 'title' | 'description' | 'dueDate'>> = {};
-      if (updates.title !== undefined && updates.title !== task.title) {
-        detailUpdates.title = updates.title;
-        updated = true;
-      }
-      if (updates.description !== undefined && updates.description !== task.description) {
-        detailUpdates.description = updates.description;
-        updated = true;
-      }
-      // Check if dueDate is actually different before marking as updated
-      const currentDueDateStr = task.dueDate ? task.dueDate.toISOString().split('T')[0] : undefined;
-      const newDueDateStr = updates.dueDate ? new Date(updates.dueDate).toISOString().split('T')[0] : undefined;
+      let detailsChanged = false;
 
-      if (updates.dueDate !== undefined && currentDueDateStr !== newDueDateStr) {
-          detailUpdates.dueDate = updates.dueDate;
-          updated = true;
-      } else if (updates.dueDate === undefined && task.dueDate !== undefined) { // Explicitly removing due date
-          detailUpdates.dueDate = undefined;
-          updated = true;
+      if (updates.hasOwnProperty('title')) {
+        if (updates.title !== undefined && updates.title !== task.title) {
+          detailUpdates.title = updates.title;
+          detailsChanged = true;
+        }
       }
 
-
-      if (Object.keys(detailUpdates).length > 0) {
-        task.updateDetails(detailUpdates);
-        // 'updated' is already true if we are here and detailUpdates had content
+      if (updates.hasOwnProperty('description')) {
+        if (updates.description !== task.description) {
+          detailUpdates.description = updates.description; // Will pass 'undefined' if that's the update
+          detailsChanged = true;
+        }
       }
       
-      if (updated) {
+      if (updates.hasOwnProperty('dueDate')) {
+        // Compare actual Date objects or their string representations if both exist
+        const currentDueDateMs = task.dueDate?.getTime();
+        const newDueDateMs = updates.dueDate?.getTime();
+
+        if (newDueDateMs !== currentDueDateMs) {
+            detailUpdates.dueDate = updates.dueDate; // Will pass 'undefined' if that's the update
+            detailsChanged = true;
+        }
+      }
+
+      if (detailsChanged) {
+        task.updateDetails(detailUpdates);
+        updated = true; // Mark overall 'updated' for saving if details changed
+      }
+      
+      // 'updated' is also true if only completion status changed.
+      if (updated) { // if completion changed OR detailsChanged
         this.saveTasks();
       }
       return task;
