@@ -2,6 +2,7 @@ import { TaskManager } from './services/TaskManager';
 import inquirer from 'inquirer';
 import { Task } from './models/Task'; // Import Task model for display formatting
 
+// Test comment for pre-commit hook
 const taskManager = new TaskManager();
 
 function displayTasks(tasks: Task[], message: string = "Tasks:") {
@@ -19,35 +20,33 @@ function displayTasks(tasks: Task[], message: string = "Tasks:") {
 }
 
 async function promptForTaskDetails(initialDetails: Partial<Task> = {}): Promise<Partial<Task>> {
-  const questions = [
+  // Define the questions for the first prompt directly:
+  const initialQuestions = [
     {
-      type: 'input',
-      name: 'title',
+      type: 'input' as const, // Using 'as const' for type literal inference
+      name: 'title' as const,
       message: "Task title:",
       default: initialDetails.title,
       validate: (input: string) => input.trim() !== '' || "Title cannot be empty."
     },
     {
-      type: 'input',
-      name: 'description',
+      type: 'input' as const,
+      name: 'description' as const,
       message: "Task description (optional):",
       default: initialDetails.description
-    },
-    {
-      type: 'input',
-      name: 'dueDate',
-      message: "Due date (optional, YYYY-MM-DD):",
-      default: initialDetails.dueDate ? new Date(initialDetails.dueDate).toISOString().split('T')[0] : undefined,
-      validate: (input: string) => {
-        if (input.trim() === '') return true;
-        return /^\d{4}-\d{2}-\d{2}$/.test(input) || "Please use YYYY-MM-DD format.";
-      }
     }
+    // The 'dueDate' question is not included here
   ];
-  const initialAnswers = await inquirer.prompt(questions.filter(q => q.name !== 'dueDate'));
+
+  // Pass this directly defined array to the prompt
+  const initialAnswers = await inquirer.prompt(initialQuestions);
   let dueDate: Date | undefined = undefined;
 
-  if (initialAnswers.title === undefined) { // Should not happen with current validation
+  // Ensure title is present, as inquirer.prompt with 'as const' should guarantee it if not optional.
+  // However, since 'default' can be undefined and validate might allow empty string if not careful,
+  // a runtime check or stricter typing on 'initialAnswers.title' might be needed if title could truly be absent.
+  // For now, assuming 'validate' ensures title is non-empty.
+  if (initialAnswers.title === undefined || initialAnswers.title.trim() === '') { // Should not happen with current validation
     console.log("Title is missing, cannot proceed.");
     return {}; // Or throw error
   }

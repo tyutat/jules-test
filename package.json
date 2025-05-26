@@ -6,7 +6,8 @@
   "scripts": {
     "start": "ts-node src/index.ts",
     "test": "jest",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "typecheck": "npx -p typescript@5.8.3 tsc --noEmit"
   },
   "repository": {
     "type": "git",
